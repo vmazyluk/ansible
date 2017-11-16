@@ -422,6 +422,7 @@ def create_instances(module, gce, instance_names, number, lc_zone):
     tags = module.params.get('tags')
     ip_forward = module.params.get('ip_forward')
     external_ip = module.params.get('external_ip')
+    internal_ip = module.params.get('internal_ip')
     disk_auto_delete = module.params.get('disk_auto_delete')
     preemptible = module.params.get('preemptible')
     disk_size = module.params.get('disk_size')
@@ -442,6 +443,11 @@ def create_instances(module, gce, instance_names, number, lc_zone):
             module.fail_json(msg='Unexpected error attempting to get a static ip %s, error: %s' % (external_ip, e.value))
     else:
         instance_external_ip = external_ip
+
+    if internal_ip == "none":
+        instance_internal_ip = None
+    else:
+        instance_internal_ip = internal_ip
 
     new_instances = []
     changed = False
@@ -507,7 +513,8 @@ def create_instances(module, gce, instance_names, number, lc_zone):
         location=lc_zone,
         ex_network=network, ex_tags=tags, ex_metadata=metadata,
         ex_can_ip_forward=ip_forward,
-        external_ip=instance_external_ip, ex_disk_auto_delete=disk_auto_delete,
+        external_ip=instance_external_ip, internal_ip=instance_internal_ip,
+        ex_disk_auto_delete=disk_auto_delete,
         ex_service_accounts=ex_sa_perms
     )
     if preemptible is not None:
@@ -672,6 +679,7 @@ def main():
             project_id=dict(),
             ip_forward=dict(type='bool', default=False),
             external_ip=dict(default='ephemeral'),
+            internal_ip=dict(default=None),
             disk_auto_delete=dict(type='bool', default=True),
             disk_size=dict(type='int', default=10),
             preemptible=dict(type='bool', default=None),
